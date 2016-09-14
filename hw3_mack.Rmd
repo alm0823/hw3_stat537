@@ -44,6 +44,8 @@ options(show.sigif.stars = FALSE)
 ```{prob1, fig.height = 5, fig.width = 5, fig.align = "center", eval = TRUE}
 plot(lm1.resid ~ rawd$year.frac, xlab = "Fractional Year", ylab = "Residuals")
 
+plot(MMXT ~ year.frac, xlab = "Fractional Year", ylab ="MMXT", data = rawd )
+
 ```
 
 2) In the de-seasonalized Bozeman temperature data set, re-assess evidence for the linear trend. Compare the result (test statistic, degrees of freedom and size of p-value) of just fitting a linear time trend in these de-seasonalized responses to the result from our original model with a linear year component and a month adjustment (not the quadratic trend model).
