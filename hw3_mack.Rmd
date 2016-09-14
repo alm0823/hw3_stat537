@@ -8,7 +8,7 @@ output: word_document
 title: "Time Series HW 3"
 ---
 __Disclaimer:__ Justin and Andrea are NEW partners, we have never worked together in one of Dr. Greenwood's classes on an assignment until now.
-```{r.settings, include=FALSE}
+```{r settings, include=FALSE}
 require(xtable)
 require(effects)
 require(car)#Anova
@@ -21,7 +21,7 @@ You can alone or in pairs that may or may not be people you worked with before. 
 I mentioned de-seasonalizing of time series, where the seasonal variation is removed from the series to highlight variation at either higher or lower frequencies. There are a variety of techniques for doing this but the simplest is to just subtract the mean for each month from the observations. And the easiest way to find that is using `lm(y~month,data=...)`. 
 
 1) For the Bozeman temperature data from HW 1 and 2, estimate a model with month only, subtract its fitted values from the responses (or just extract residuals). Plot the residuals vs the fractional `Year` variable and compare the plot of this result to the plot of the original time series. 
-```{setup, include = FALSE}
+```{r setup, include = FALSE}
 rawbozemandata <- read.csv("https://dl.dropboxusercontent.com/u/77307195/rawbozemandata.csv", 
                            header = T)
 
@@ -37,11 +37,10 @@ lm1 <- lm(temp ~ monthf, data = rawd)
 
 lm1.resid <- lm1$residuals
 
-knitr :: opts$chunk_set(cache = TRUE, echo = FALSE)
 options(show.sigif.stars = FALSE)
 ```
 
-```{prob1, fig.height = 5, fig.width = 5, fig.align = "center", eval = TRUE}
+```{r prob1}
 plot(lm1.resid ~ rawd$year.frac, xlab = "Fractional Year", ylab = "Residuals")
 
 plot(MMXT ~ year.frac, xlab = "Fractional Year", ylab ="MMXT", data = rawd )
@@ -53,7 +52,7 @@ plot(MMXT ~ year.frac, xlab = "Fractional Year", ylab ="MMXT", data = rawd )
 CHECK IF THIS IS WHAT HE WANTS
 
 \label{Deseasonalized Temperature Regressed on Year}
-```{prob2, results = 'asis'}
+```{r prob2, results = 'asis'}
 lm2 <- lm(lm1.resid ~ rawd$year)
 options(show.signif.stars = FALSE)
 lm2.sum <- summary(lm2)
@@ -62,7 +61,7 @@ xtable(lm2.sum)
 ```
 
 \label{Temperature Regressed on Year and Month}
-```{prob2x, results = 'asis'}
+```{r prob2x, results = 'asis'}
 lm3 <- lm(temp ~ year + monthf, data = rawd)
 lm3.sum <- summary(lm3)
 
@@ -71,7 +70,7 @@ xtable(lm3.sum)
 
 3) I briefly discussed the HADCRUT data set in class. We will consider the HADCRUT4 series of temperature anomalies for the Nothern Hemisphere. The fully up to date data set is available at: http://www.metoffice.gov.uk/hadobs/hadcrut4/data/current/time_series/HadCRUT.4.4.0.0.monthly_nh.txt
 
-```{prob3, include = FALSE}
+```{r prob3, include = FALSE}
 hadcrut <- read.table("http://www.metoffice.gov.uk/hadobs/hadcrut4/data/current/time_series/HadCRUT.4.4.0.0.monthly_nh.txt", header = FALSE)
 head(hadcrut)
 
@@ -90,15 +89,15 @@ SO, to me the ensemble is the difference from the median temperature that is nor
 
 DISCUSS
 
-```{prob3x}
+```{r prob3x}
 #col2 are the ensemble medians
 
 plot(hadcrut$V2 ~ hadcrut$date, xlab = "Months Since January 1850", ylab = "Ensemble Medians")
 
 #an ensemble data set in which the 100 constituent
-ensemble members sample the distribution of likely surface temperature anomalies given our
-current understanding of these uncertainties
-#Sea Surface Temperature anomalies in degrees Celsius, or "SST anomalies" for short, are how much temperatures depart from what is normal for that time of year.
+#ensemble members sample the distribution of likely surface temperature anomalies given our
+#current understanding of these uncertainties
+#Sea Surface Temperature anomalies in degrees Celsius, or "SST anomalies" for short, are how much #temperatures depart from what is normal for that time of year.
 ```
 4) Our main focus with these data will be on estimating the long-term trend, starting with polynomial trend models. But first, check for seasonality in a model that accounts for a linear time trend. Use our previous fractional year for the trend. Report an `effects` plot and a test for the month model component.
 SEE COMMENT IN CODE CHUNK
@@ -106,7 +105,7 @@ ALSO, DO WE USE FRACTIONAL YEAR AS IN PART (A) OR DO WE USE TS OBJECT?
 
 Based on an Fstat of 6.74 on 11 and 1986 degrees of freedom, with an associated pvalue of $\<$ 0.001, there is strong evidence that the effect of date on median ensemble changes by month.
 
-```{prob4, results = 'asis'}
+```{r prob4, results = 'asis'}
 hadcrut$monthf <- as.factor(month.abb[as.numeric(substr(hadcrut$V1,6,7))])
 hadcrut$time.date <- time(hadcrut$date)
 lm4 <- lm(V2 ~ time.date + monthf, data = hadcrut)#don't need monthf as explanatory bc month already induced in time??
@@ -123,7 +122,7 @@ Note: when you use `time()` to generate the `Year` variable from a time series o
 
 Viewing the residuals vs. fitted values plot below, there appears to be a quadratice relationship between the fitted values and residuals that was not captured by the model. For fitted values less than -0.3, there appears to be more variation in the residuals than for fitted values above -0.3. The model is less accurately predicting median ensembles when the original median ensemble was below -0.3, which to me means that we may have left out a variable or structure that explains when median ensemble was lower than expected.
 
-```{prob5}
+```{r prob5}
 par(mfrow = c(2,2))
 plot(lm4)
 
@@ -133,7 +132,7 @@ plot(lm4)
 6) You can add higher order polynomial terms to models using `x1+I(x1^2)+I(x1^3)`... or using the `poly` function, such as `poly(x1,3,raw=T)` for a cubic polynomial that includes the linear and quadratic components (we want this!). The `raw=T` keeps the variables in their raw or input format. Estimate the same model but now using polynomial trends that steps up from linear (poly(time,1,raw=T)) and stop when you get a failure to estimate a part of the model. Briefly discuss what happened.
 
 When I got to the fifth degree polynomial, the estimate could not be computed. WHY? My guess is that it has something to do with the seasonality of the time.data variable, or it be perfectly collinear with another variable.
-```{prob6}
+```{r prob6}
 lm.d1 <- lm(V2~poly(time.date,1,raw=TRUE) + monthf, data = hadcrut)
 summary(lm.d1)
 lm.d <- NULL
