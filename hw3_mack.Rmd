@@ -191,16 +191,28 @@ lm.d2[i] <- lm(V2~poly(time.date,i,raw=FALSE) + monthf, data = hadcrut)
 }
 
 orthofunc<-function(i) {
-  ortho.lm<-lm(hadcrut$V2~poly(hadcrut$time.date,i,raw=FALSE) + hadcrut$monthf,data=hadcrut)
+  ortho.lm<-lm(V2~poly(time.date,i,raw=FALSE) + monthf,data=hadcrut)
   return (summary(ortho.lm))
 }
 orthofunc(10) #"large p value"
-final.lm<-lm(hadcrut$V2~poly(hadcrut$time.date,9,raw=FALSE) + hadcrut$monthf,data=hadcrut)
+
+final.lm<-lm(V2~poly(time.date,9,raw=FALSE) + monthf,data=hadcrut)
 plot(allEffects(final.lm))
 ```
 
 
 8) Check the diagnostic plots from your final model. Does anything improve from the first version. Also plot the residuals vs time and compare that plot to residuals vs fitted.  
+
+
+```{r prob8}
+par(mfrow=c(2,2))
+plot(final.lm)
+par(mfrow=c(2,1))
+plot(final.lm,which=1)
+plot(final.lm$residuals~hadcrut$time.date)
+
+```
+
 
 
 9) Run the following code so I can see what version of R you are now using:
