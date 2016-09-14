@@ -47,6 +47,8 @@ plot(MMXT ~ year.frac, xlab = "Fractional Year", ylab ="MMXT", data = rawd )
 
 ```
 
+_Comparing the plot of the residuals and the fractional year to the plot of the max monthly temperatures and the fractional year, we can see that the noise has been reduced in the residuals plot, and a slight positive linear trend can be observed. Unusual points are also more apparent in the plot of the residuals as they are slightly more seperated from the bulk of the data, compared to the plot of the max monthly themperatures where we see little seperation, and the points seem to fall in with the rest of the data._
+
 2) In the de-seasonalized Bozeman temperature data set, re-assess evidence for the linear trend. Compare the result (test statistic, degrees of freedom and size of p-value) of just fitting a linear time trend in these de-seasonalized responses to the result from our original model with a linear year component and a month adjustment (not the quadratic trend model).
 
 CHECK IF THIS IS WHAT HE WANTS
@@ -89,9 +91,11 @@ SO, to me the ensemble is the difference from the median temperature that is nor
 
 DISCUSS
 
+_Assessing the plot of the ensemble medians versus time, we can see an overall positive trend since January of 1850. The variability from month to month appears to be larger in the earlier years of the data set as we can see a wide band of observations spread between about -1.5 and 0.7. In the later years, this spread appears to have decreased. Across the entire 156 year interval, there are several values that stand out from the rest of the data, especially in the first five hundred years._
+
 ```{r prob3x}
 #col2 are the ensemble medians
-
+par(mfrow=c(1,1))
 plot(hadcrut$V2 ~ hadcrut$date, xlab = "Months Since January 1850", ylab = "Ensemble Medians")
 
 #an ensemble data set in which the 100 constituent
@@ -100,14 +104,12 @@ plot(hadcrut$V2 ~ hadcrut$date, xlab = "Months Since January 1850", ylab = "Ense
 #Sea Surface Temperature anomalies in degrees Celsius, or "SST anomalies" for short, are how much #temperatures depart from what is normal for that time of year.
 ```
 4) Our main focus with these data will be on estimating the long-term trend, starting with polynomial trend models. But first, check for seasonality in a model that accounts for a linear time trend. Use our previous fractional year for the trend. Report an `effects` plot and a test for the month model component.
-SEE COMMENT IN CODE CHUNK
-ALSO, DO WE USE FRACTIONAL YEAR AS IN PART (A) OR DO WE USE TS OBJECT?
 
-Based on an Fstat of 6.74 on 11 and 1986 degrees of freedom, with an associated pvalue of $\<$ 0.001, there is strong evidence that the effect of date on median ensemble changes by month.
+_Based on an F-stat of 6.74 on 11 and 1986 degrees of freedom, with an associated pvalue of $\<$ 0.001, there is strong evidence that the effect of date on median ensemble changes by month. Examining the monthf effect plot provided, we can see there is very little overlap in the confidence intervals for the median ensemble estimate for many pairs of months, indicating time has an affect on the monthly median ensemble changes._
 
 ```{r prob4, results = 'asis'}
-hadcrut$monthf <- as.factor(month.abb[as.numeric(substr(hadcrut$V1,6,7))])
-hadcrut$time.date <- time(hadcrut$date)
+hadcrut$monthf <- as.factor(as.numeric(substr(hadcrut$V1,6,7)))
+hadcrut$time.date <- as.vector(time(hadcrut$date))
 lm4 <- lm(V2 ~ time.date + monthf, data = hadcrut)#don't need monthf as explanatory bc month already induced in time??
 
 plot(allEffects(lm4))
@@ -120,11 +122,14 @@ Note: when you use `time()` to generate the `Year` variable from a time series o
 
 5) Check the residuals versus fitted values for any evidence of nonlinearity in the residuals vs fitted that was missed by the model with a linear trend and month component. Also note any potential issues with the constant variance assumption.
 
-Viewing the residuals vs. fitted values plot below, there appears to be a quadratice relationship between the fitted values and residuals that was not captured by the model. For fitted values less than -0.3, there appears to be more variation in the residuals than for fitted values above -0.3. The model is less accurately predicting median ensembles when the original median ensemble was below -0.3, which to me means that we may have left out a variable or structure that explains when median ensemble was lower than expected.
+_Viewing the residuals vs. fitted values plot below, there appears to be a quadratice relationship between the fitted values and residuals that was not captured by the model. For fitted values less than -0.3, there appears to be more variation in the residuals than for fitted values above -0.3, indicating the constant variance assumption may be violated. The model is less accurately predicting median ensembles when the original median ensemble was below -0.3, which means that we may have left out a variable or structure that explains when median ensemble was lower than expected._
 
 ```{r prob5}
 par(mfrow = c(2,2))
 plot(lm4)
+
+#change to:?
+plot(lm4,which=1)
 
 
 ```
@@ -132,19 +137,68 @@ plot(lm4)
 6) You can add higher order polynomial terms to models using `x1+I(x1^2)+I(x1^3)`... or using the `poly` function, such as `poly(x1,3,raw=T)` for a cubic polynomial that includes the linear and quadratic components (we want this!). The `raw=T` keeps the variables in their raw or input format. Estimate the same model but now using polynomial trends that steps up from linear (poly(time,1,raw=T)) and stop when you get a failure to estimate a part of the model. Briefly discuss what happened.
 
 When I got to the fifth degree polynomial, the estimate could not be computed. WHY? My guess is that it has something to do with the seasonality of the time.data variable, or it be perfectly collinear with another variable.
+
+_We can see that the estimate for the fifth degree term in the model cannot be computed, while all lower order terms could be. Examining the estimates themselves, we can see the intercept is a large number, as is the estimate for the first degree term. The estimate for the second degree term is relatively small compared to the first two estimates, with the third and fourth degree terms being even smaller. This deminishing trend means that the higher the degree, the less information that term is adding to the model. The estimate for the fifth degree term must be so small, it goes beyond R's computational abilities. The estimates for the fourth and fifth degree terms may be so small because the second and third degree terms may have already added most of the information necessary for this model._
 ```{r prob6}
 lm.d1 <- lm(V2~poly(time.date,1,raw=TRUE) + monthf, data = hadcrut)
 summary(lm.d1)
 lm.d <- NULL
+
+test<-lm(V2~monthf,data=hadcrut)
+resids1<-test$residuals
+par(mfrow=c(3,1))
+
+plot(resids1^5~hadcrut$time.date,xlim = c(1850,1900), ylim = c(-0.5,0.5))
+curve((1/sd(hadcrut$time))*((x-mean(hadcrut$time))/sd(hadcrut$time)), add = TRUE, col = "yellow")
+curve((1/sd(hadcrut$time))*((x-mean(hadcrut$time))/sd(hadcrut$time))^2, add = TRUE, col = "purple")
+curve((1/sd(hadcrut$time))*((x-mean(hadcrut$time))/sd(hadcrut$time))^3, add = TRUE, col = "red")
+curve((1/sd(hadcrut$time))*((x-mean(hadcrut$time))/sd(hadcrut$time))^4, add = TRUE, col = "blue")
+curve((1/sd(hadcrut$time))*((x-mean(hadcrut$time))/sd(hadcrut$time))^5, add = TRUE, col = "green")
+
+plot.window(xlim = c(1900,1950), ylim = c(-3,3))
+plot(resids1^5~hadcrut$time.date,xlim = c(1900,1950), ylim = c(-0.075,0.075))
+curve((1/sd(hadcrut$time))*((x-mean(hadcrut$time))/sd(hadcrut$time))^3, add = TRUE, col = "red")
+curve((1/sd(hadcrut$time))*((x-mean(hadcrut$time))/sd(hadcrut$time))^4, add = TRUE, col = "blue")
+curve((1/sd(hadcrut$time))*((x-mean(hadcrut$time))/sd(hadcrut$time))^5, add = TRUE, col = "green")
+
+plot(resids1^5~hadcrut$time.date,xlim = c(1950,2016), ylim = c(-0.5,0.5))
+curve((1/sd(hadcrut$time))*((x-mean(hadcrut$time))/sd(hadcrut$time)), add = TRUE, col = "yellow")
+curve((1/sd(hadcrut$time))*((x-mean(hadcrut$time))/sd(hadcrut$time))^2, add = TRUE, col = "purple")
+curve((1/sd(hadcrut$time))*((x-mean(hadcrut$time))/sd(hadcrut$time))^3, add = TRUE, col = "red")
+curve((1/sd(hadcrut$time))*((x-mean(hadcrut$time))/sd(hadcrut$time))^4, add = TRUE, col = "blue")
+curve((1/sd(hadcrut$time))*((x-mean(hadcrut$time))/sd(hadcrut$time))^5, add = TRUE, col = "green")
 
 for(i in 1:25){
 lm.d[i] <- lm(V2~poly(time.date,i,raw=TRUE) + monthf, data = hadcrut)
 }
 lm.d[4]
 lm.d[5]
+
+#another way, I was getting errors in 7 with the for loop
+polyfunc<-function(i) {
+  poly.lm<-lm(V2~poly(time.date,i,raw=TRUE) + monthf, data = hadcrut)
+  return (summary(poly.lm))
+}
+polyfunc(4)
+polyfunc(5)
 ```
 
 7) If we center or, even better, make the polynomial functions orthogonal to one another, we can avoid the issue in the previous question. Use `poly(x1,?,raw=F)` and step up the polynomial order for time until the p-value for the last coefficient (use `summary()`) is "large", reporting the single test result for each step in the building process. Then drop back one order and re-fit the model. Report the `effects` plot of the resulting model and describe the estimated trend. Note: aside from access to orthogonal polynomials the `poly` function interfaces with `Anova` and the `effects` package really nicely.
+
+```{r prob 7}
+for(i in 1:25){
+lm.d2[i] <- lm(V2~poly(time.date,i,raw=FALSE) + monthf, data = hadcrut)
+}
+
+orthofunc<-function(i) {
+  ortho.lm<-lm(hadcrut$V2~poly(hadcrut$time.date,i,raw=FALSE) + hadcrut$monthf,data=hadcrut)
+  return (summary(ortho.lm))
+}
+orthofunc(10) #"large p value"
+final.lm<-lm(hadcrut$V2~poly(hadcrut$time.date,9,raw=FALSE) + hadcrut$monthf,data=hadcrut)
+plot(allEffects(final.lm))
+```
+
 
 8) Check the diagnostic plots from your final model. Does anything improve from the first version. Also plot the residuals vs time and compare that plot to residuals vs fitted.  
 
