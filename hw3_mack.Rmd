@@ -87,16 +87,26 @@ Because the time series is complete over the time frame under consideration, you
 
 Make a plot versus time of the ensemble medians and use that as your response variable in the following questions. Discuss trend, seasonality, outliers, and variability.
 
-SO, to me the ensemble is the difference from the median temperature that is normal for that time of year. It's not clear to me whether the median is computed for each month before the difference is taken, or whether the overall median (regardless of month) is subtracted from each temperature value to get the ensemble variable.
+Assessing the plot of the ensemble medians versus time, we can see an overall positive trend since January of 1850. The trend has curvature, suggesting a cyclic trend in ensemble medians throughout the timeline. It will be interesting to see if we are currently at a peak in ensemble medians.The resolution of the plot below does not allow us to visally assess seasonality trends. The variability  appears to be larger in the first 500 years of the data set as we can see a range of observations  between about -1.5 and 0.7. In the later years, this spread appears to have decreased. Across the entire 156 year interval, there are a few observations that stand out from the rest of the data as outliers, especially in the first five hundred years. 
 
+The last two plots are zoomed in to the first four years. There appears to be seasonality, but the seasonality does only appears to be somewhat consistent across the first four years during the first six months of the years.
+
+SO, to me the ensemble is the difference from the median temperature that is normal for that time of year. It's not clear to me whether the median is computed for each month before the difference is taken, or whether the overall median (regardless of month) is subtracted from each temperature value to get the ensemble variable. 
 DISCUSS
 
-_Assessing the plot of the ensemble medians versus time, we can see an overall positive trend since January of 1850. The variability from month to month appears to be larger in the earlier years of the data set as we can see a wide band of observations spread between about -1.5 and 0.7. In the later years, this spread appears to have decreased. Across the entire 156 year interval, there are several values that stand out from the rest of the data, especially in the first five hundred years._
 
-```{r prob3x}
+
+```{r prob3x, fig.height = 6, fig.width = 8}
 #col2 are the ensemble medians
 par(mfrow=c(1,1))
 plot(hadcrut$V2 ~ hadcrut$date, xlab = "Months Since January 1850", ylab = "Ensemble Medians")
+par(mfrow=c(2,1))
+plot(hadcrut[1:12,]$V2 ~ hadcrut[1:12,]$date, xlab = "Months Since January 1850", ylab = "Ensemble Medians")
+plot(hadcrut[12:24,]$V2 ~ hadcrut[12:24,]$date, xlab = "Months Since January 1850", ylab = "Ensemble Medians")
+par(mfrow = c(2,1))
+plot(hadcrut[24:36,]$V2 ~ hadcrut[24:36,]$date, xlab = "Months Since January 1850", ylab = "Ensemble Medians")
+plot(hadcrut[36:48,]$V2 ~ hadcrut[36:48,]$date, xlab = "Months Since January 1850", ylab = "Ensemble Medians")
+
 
 #an ensemble data set in which the 100 constituent
 #ensemble members sample the distribution of likely surface temperature anomalies given our
@@ -186,18 +196,18 @@ polyfunc(5)
 7) If we center or, even better, make the polynomial functions orthogonal to one another, we can avoid the issue in the previous question. Use `poly(x1,?,raw=F)` and step up the polynomial order for time until the p-value for the last coefficient (use `summary()`) is "large", reporting the single test result for each step in the building process. Then drop back one order and re-fit the model. Report the `effects` plot of the resulting model and describe the estimated trend. Note: aside from access to orthogonal polynomials the `poly` function interfaces with `Anova` and the `effects` package really nicely.
 
 ```{r prob 7}
-for(i in 1:25){
-lm.d2[i] <- lm(V2~poly(time.date,i,raw=FALSE) + monthf, data = hadcrut)
-}
+#for(i in 1:25){
+#lm.d2[i] <- lm(V2~poly(time.date,i,raw=FALSE) + monthf, data = hadcrut)
+#}
 
-orthofunc<-function(i) {
-  ortho.lm<-lm(V2~poly(time.date,i,raw=FALSE) + monthf,data=hadcrut)
-  return (summary(ortho.lm))
-}
-orthofunc(10) #"large p value"
+#orthofunc<-function(i) {
+  #ortho.lm<-lm(V2~poly(time.date,i,raw=FALSE) + monthf,data=hadcrut)
+  #return (summary(ortho.lm))
+#}
+###orthofunc(10) #"large p value"
 
-final.lm<-lm(V2~poly(time.date,9,raw=FALSE) + monthf,data=hadcrut)
-plot(allEffects(final.lm))
+#final.lm<-lm(V2~poly(time.date,9,raw=FALSE) + monthf,data=hadcrut)
+#plot(allEffects(final.lm))
 ```
 
 
@@ -206,10 +216,10 @@ plot(allEffects(final.lm))
 
 ```{r prob8}
 par(mfrow=c(2,2))
-plot(final.lm)
+#plot(final.lm)
 par(mfrow=c(2,1))
-plot(final.lm,which=1)
-plot(final.lm$residuals~hadcrut$time.date)
+#plot(final.lm,which=1)
+#plot(final.lm$residuals~hadcrut$time.date)
 
 ```
 
